@@ -1,0 +1,1504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Vendor Sourcing Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.24.7/babel.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          accent: { 50: "#EAF1FB", 100: "#D3E3F7", 500: "#2E6FC2", 600: "#1B4B91", 700: "#123869" },
+          ink: { 400: "#8A93A3", 500: "#5B6472", 900: "#12161F" },
+          line: { 200: "#E2E5EA", 300: "#D3D7DE" },
+          surface: { 100: "#F5F6F8" },
+          good: { 600: "#0F7B6C", 50: "#E9F5F2" },
+          bad: { 600: "#B23B3B", 50: "#FBECEC" },
+          warn: { 600: "#C98A2C", 50: "#FBF1E1" },
+        },
+        fontFamily: {
+          mono: ['"IBM Plex Mono"', "monospace"],
+          sans: ['"IBM Plex Sans"', "sans-serif"],
+        },
+      },
+    },
+  };
+</script>
+<style>
+  body { margin: 0; font-feature-settings: "tnum"; }
+  ::-webkit-scrollbar { height: 8px; width: 8px; }
+  ::-webkit-scrollbar-thumb { background: #D3D7DE; border-radius: 0; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" data-presets="react">
+const { useState, useMemo, useRef, useEffect } = React;
+
+function IconBase({ children, size = 16, className = "", ...props }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+      {...props}
+    >
+      {children}
+    </svg>
+  );
+}
+function Plus(props) {
+  return (
+    <IconBase {...props}>
+      <line x1="12" y1="5" x2="12" y2="19" />
+      <line x1="5" y1="12" x2="19" y2="12" />
+    </IconBase>
+  );
+}
+function Trash2(props) {
+  return (
+    <IconBase {...props}>
+      <polyline points="3 6 5 6 21 6" />
+      <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+      <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+    </IconBase>
+  );
+}
+function ChevronRight(props) {
+  return (
+    <IconBase {...props}>
+      <polyline points="9 18 15 12 9 6" />
+    </IconBase>
+  );
+}
+function AlertTriangle(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+      <line x1="12" y1="9" x2="12" y2="13" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
+    </IconBase>
+  );
+}
+function CheckCircle2(props) {
+  return (
+    <IconBase {...props}>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9 12l2 2 4-4" />
+    </IconBase>
+  );
+}
+function CloudRain(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M20 16.2A4.5 4.5 0 0 0 17.5 8h-1.8A7 7 0 1 0 4 14.9" />
+      <path d="M16 14v6" />
+      <path d="M8 14v6" />
+      <path d="M12 16v6" />
+    </IconBase>
+  );
+}
+function Sliders(props) {
+  return (
+    <IconBase {...props}>
+      <line x1="4" y1="21" x2="4" y2="14" />
+      <line x1="4" y1="10" x2="4" y2="3" />
+      <line x1="12" y1="21" x2="12" y2="12" />
+      <line x1="12" y1="8" x2="12" y2="3" />
+      <line x1="20" y1="21" x2="20" y2="16" />
+      <line x1="20" y1="12" x2="20" y2="3" />
+      <line x1="1" y1="14" x2="7" y2="14" />
+      <line x1="9" y1="8" x2="15" y2="8" />
+      <line x1="17" y1="16" x2="23" y2="16" />
+    </IconBase>
+  );
+}
+function Table2(props) {
+  return (
+    <IconBase {...props}>
+      <rect x="3" y="3" width="18" height="18" rx="2" />
+      <line x1="3" y1="9" x2="21" y2="9" />
+      <line x1="3" y1="15" x2="21" y2="15" />
+      <line x1="9" y1="3" x2="9" y2="21" />
+    </IconBase>
+  );
+}
+function Gauge(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 14l4-4" />
+      <path d="M3.34 19a10 10 0 1 1 17.32 0" />
+    </IconBase>
+  );
+}
+function ListChecks(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M9 6h11" />
+      <path d="M9 12h11" />
+      <path d="M9 18h11" />
+      <path d="M3 6l1 1 2-2" />
+      <path d="M3 12l1 1 2-2" />
+      <path d="M3 18l1 1 2-2" />
+    </IconBase>
+  );
+}
+function Upload(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 3v12" />
+      <path d="M7 8l5-5 5 5" />
+      <path d="M5 21h14" />
+    </IconBase>
+  );
+}
+function Download(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 3v12" />
+      <path d="M7 10l5 5 5-5" />
+      <path d="M5 21h14" />
+    </IconBase>
+  );
+}
+function Pencil(props) {
+  return (
+    <IconBase {...props}>
+      <path d="M12 20h9" />
+      <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+    </IconBase>
+  );
+}
+
+
+const uid = () => Math.random().toString(36).slice(2, 9);
+
+function friendlyFetchError(err) {
+  if (err instanceof TypeError && /fetch/i.test(err.message)) {
+    return "Network request blocked — likely the artifact preview sandbox. This feature needs a real browser environment (try the local npm scaffold) rather than the in-chat preview.";
+  }
+  return err.message || "Fetch failed";
+}
+
+const SECTIONS = [
+  { id: "variables", label: "Variables", icon: Table2 },
+  { id: "weights", label: "AHP weights", icon: Sliders },
+  { id: "suppliers", label: "Suppliers", icon: Table2 },
+  { id: "topsis", label: "TOPSIS ranking", icon: Gauge },
+  { id: "constraints", label: "Constraints", icon: ListChecks },
+  { id: "uncertainty", label: "Rainfall risk", icon: CloudRain },
+  { id: "montecarlo", label: "Monte Carlo", icon: Gauge },
+  { id: "optimize", label: "Optimize", icon: Gauge },
+];
+
+const RI = { 1: 0, 2: 0, 3: 0.58, 4: 0.9, 5: 1.12, 6: 1.24, 7: 1.32, 8: 1.41, 9: 1.45, 10: 1.49 };
+
+function topsisScores(suppliers, variables, weights) {
+  if (suppliers.length === 0 || variables.length === 0) return {};
+  const denom = variables.map((v) => {
+    const sumSq = suppliers.reduce((s, sup) => s + Math.pow(Number(sup.values[v.id] ?? 0), 2), 0);
+    return Math.sqrt(sumSq) || 1;
+  });
+  const weighted = {};
+  suppliers.forEach((s) => {
+    weighted[s.id] = variables.map((v, idx) => {
+      const raw = Number(s.values[v.id] ?? 0);
+      return (weights[idx] || 0) * (raw / denom[idx]);
+    });
+  });
+  const idealBest = variables.map((v, idx) => {
+    const col = suppliers.map((s) => weighted[s.id][idx]);
+    return v.direction === "lower" ? Math.min(...col) : Math.max(...col);
+  });
+  const idealWorst = variables.map((v, idx) => {
+    const col = suppliers.map((s) => weighted[s.id][idx]);
+    return v.direction === "lower" ? Math.max(...col) : Math.min(...col);
+  });
+  const scores = {};
+  suppliers.forEach((s) => {
+    const sPlus = Math.sqrt(weighted[s.id].reduce((sum, val, idx) => sum + Math.pow(val - idealBest[idx], 2), 0));
+    const sMinus = Math.sqrt(weighted[s.id].reduce((sum, val, idx) => sum + Math.pow(val - idealWorst[idx], 2), 0));
+    const denomC = sPlus + sMinus;
+    scores[s.id] = denomC === 0 ? 0.5 : sMinus / denomC;
+  });
+  return scores;
+}
+
+function eigenWeights(matrix) {
+  const n = matrix.length;
+  if (n === 0) return { weights: [], lambdaMax: 0, ci: 0, cr: 0 };
+  let vec = new Array(n).fill(1);
+  for (let iter = 0; iter < 60; iter++) {
+    const next = matrix.map((row) => row.reduce((s, v, j) => s + v * vec[j], 0));
+    const norm = Math.sqrt(next.reduce((s, v) => s + v * v, 0)) || 1;
+    vec = next.map((v) => v / norm);
+  }
+  const sum = vec.reduce((s, v) => s + v, 0) || 1;
+  const weights = vec.map((v) => v / sum);
+  const Av = matrix.map((row) => row.reduce((s, v, j) => s + v * weights[j], 0));
+  const lambdaMax = Av.reduce((s, v, i) => s + v / (weights[i] || 1e-9), 0) / n;
+  const ci = n > 2 ? (lambdaMax - n) / (n - 1) : 0;
+  const cr = RI[n] ? ci / RI[n] : 0;
+  return { weights, lambdaMax, ci, cr };
+}
+
+function geomMean(matrices) {
+  if (matrices.length === 0) return [];
+  const n = matrices[0].length;
+  const agg = Array.from({ length: n }, () => new Array(n).fill(1));
+  for (let i = 0; i < n; i++) {
+    for (let j = 0; j < n; j++) {
+      let prod = 1;
+      matrices.forEach((m) => (prod *= m[i][j]));
+      agg[i][j] = Math.pow(prod, 1 / matrices.length);
+    }
+  }
+  return agg;
+}
+
+function SourcingDashboard() {
+  const [active, setActive] = useState("variables");
+
+  const [variables, setVariables] = useState([
+    { id: uid(), name: "Cost competitiveness", direction: "lower" },
+    { id: uid(), name: "Quality (defect rate/PPM, batch rejection)", direction: "lower" },
+    { id: uid(), name: "Delivery reliability (OTIF %)", direction: "higher" },
+    { id: uid(), name: "Lead-time consistency (mean + variance)", direction: "higher" },
+    { id: uid(), name: "Financial stability (credit proxy, years in business)", direction: "higher" },
+    { id: uid(), name: "Compliance/certification (GMP, ISO)", direction: "higher" },
+    { id: uid(), name: "Capacity flexibility", direction: "higher" },
+    { id: uid(), name: "Responsiveness/communication", direction: "higher" },
+  ]);
+
+  const [expertCount, setExpertCount] = useState(1);
+  const [expertMatrices, setExpertMatrices] = useState({});
+
+  const [suppliers, setSuppliers] = useState([
+    { id: uid(), name: "Supplier A", location: "Baddi, HP", values: {}, capacity: 1000, moq: 100 },
+    { id: uid(), name: "Supplier B", location: "Daman", values: {}, capacity: 800, moq: 50 },
+  ]);
+
+  const [constraints, setConstraints] = useState([
+    { id: uid(), label: "Minimum composite score", variable: "composite", op: ">=", value: 0.5 },
+  ]);
+
+  const [demand, setDemand] = useState(1200);
+  const [rainfallRisk, setRainfallRisk] = useState({});
+  const [rainfallMeta, setRainfallMeta] = useState({});
+  const [rainfallLoading, setRainfallLoading] = useState(false);
+
+  async function fetchLiveRainfallForLocation(location) {
+    const geoRes = await fetch(
+      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(location)}&count=1`
+    );
+    const geoData = await geoRes.json();
+    const place = geoData.results?.[0];
+    if (!place) throw new Error("Location not found");
+
+    // Historical baseline: what counts as "heavy rain" for THIS location.
+    const histEnd = new Date();
+    histEnd.setDate(histEnd.getDate() - 5);
+    const histStart = new Date(histEnd);
+    histStart.setDate(histStart.getDate() - 365);
+    const fmt = (d) => d.toISOString().slice(0, 10);
+
+    const histRes = await fetch(
+      `https://archive-api.open-meteo.com/v1/archive?latitude=${place.latitude}&longitude=${place.longitude}` +
+        `&start_date=${fmt(histStart)}&end_date=${fmt(histEnd)}&daily=precipitation_sum&timezone=auto`
+    );
+    const histData = await histRes.json();
+    const histValues = (histData.daily?.precipitation_sum || []).filter((v) => v !== null);
+    const sorted = [...histValues].sort((a, b) => a - b);
+    const p90 = sorted.length ? sorted[Math.floor(sorted.length * 0.9)] : 0;
+
+    // Live signal: current conditions + 7-day forecast, from Open-Meteo's forecast endpoint.
+    const liveRes = await fetch(
+      `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}` +
+        `&current=precipitation&daily=precipitation_sum&forecast_days=7&timezone=auto`
+    );
+    const liveData = await liveRes.json();
+    const currentPrecip = liveData.current?.precipitation ?? 0;
+    const forecast = liveData.daily?.precipitation_sum || [];
+    const exceedDays = forecast.filter((v) => v !== null && v > p90).length;
+    const risk = forecast.length ? Math.round((exceedDays / forecast.length) * 100) : 0;
+
+    return {
+      risk,
+      detail:
+        `${exceedDays}/${forecast.length} of next-7-day forecast exceed this location's 1-year P90 (${p90.toFixed(1)}mm)` +
+        (currentPrecip > 0 ? `; raining now, ${currentPrecip}mm/hr` : "; no rain currently"),
+      place: `${place.name}${place.admin1 ? ", " + place.admin1 : ""}${place.country ? ", " + place.country : ""}`,
+    };
+  }
+
+  async function runFetchAllLiveRainfall() {
+    setRainfallLoading(true);
+    for (const sup of suppliers) {
+      if (!sup.location || !sup.location.trim()) {
+        setRainfallMeta((m) => ({ ...m, [sup.id]: { source: "error", detail: "No location set" } }));
+        continue;
+      }
+      try {
+        const result = await fetchLiveRainfallForLocation(sup.location);
+        setRainfallRisk((r) => ({ ...r, [sup.id]: result.risk }));
+        setRainfallMeta((m) => ({
+          ...m,
+          [sup.id]: { source: "live", detail: result.detail, place: result.place, fetchedAt: new Date().toLocaleString() },
+        }));
+      } catch (err) {
+        setRainfallMeta((m) => ({ ...m, [sup.id]: { source: "error", detail: friendlyFetchError(err) } }));
+      }
+    }
+    setRainfallLoading(false);
+  }
+
+  const [fetchingId, setFetchingId] = useState(null);
+  const [autoTrack, setAutoTrack] = useState(false);
+
+  useEffect(() => {
+    if (!autoTrack) return;
+    const id = setInterval(() => {
+      runFetchAllLiveRainfall();
+    }, 15 * 60 * 1000); // 15 min
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [autoTrack, suppliers]);
+
+  async function fetchOneSupplierRainfall(sup) {
+    if (!sup.location || !sup.location.trim()) {
+      setRainfallMeta((m) => ({ ...m, [sup.id]: { source: "error", detail: "No location set" } }));
+      return;
+    }
+    setFetchingId(sup.id);
+    try {
+      const result = await fetchLiveRainfallForLocation(sup.location);
+      setRainfallRisk((r) => ({ ...r, [sup.id]: result.risk }));
+      setRainfallMeta((m) => ({
+        ...m,
+        [sup.id]: { source: "live", detail: result.detail, place: result.place, fetchedAt: new Date().toLocaleString() },
+      }));
+    } catch (err) {
+      setRainfallMeta((m) => ({ ...m, [sup.id]: { source: "error", detail: friendlyFetchError(err) } }));
+    }
+    setFetchingId(null);
+  }
+
+  const [sensVar, setSensVar] = useState(null);
+  const [sensWeight, setSensWeight] = useState(30);
+
+  const n = variables.length;
+
+  function getMatrix(expertIdx) {
+    const key = String(expertIdx);
+    if (expertMatrices[key]) return expertMatrices[key];
+    return Array.from({ length: n }, (_, i) => Array.from({ length: n }, (_, j) => (i === j ? 1 : 1)));
+  }
+
+  function setCell(expertIdx, i, j, val) {
+    const key = String(expertIdx);
+    const m = getMatrix(expertIdx).map((row) => row.slice());
+    m[i][j] = val;
+    m[j][i] = 1 / val;
+    setExpertMatrices((prev) => ({ ...prev, [key]: m }));
+  }
+
+  const aggregatedMatrix = useMemo(() => {
+    const mats = Array.from({ length: expertCount }, (_, k) => getMatrix(k));
+    return expertCount > 1 ? geomMean(mats) : mats[0];
+  }, [expertCount, expertMatrices, n]);
+
+  const ahp = useMemo(() => eigenWeights(aggregatedMatrix || []), [aggregatedMatrix]);
+
+  const adjustedWeights = useMemo(() => {
+    const idx = variables.findIndex((v) => v.id === sensVar);
+    if (idx === -1) return ahp.weights;
+    const target = sensWeight / 100;
+    const others = ahp.weights.filter((_, i) => i !== idx);
+    const othersSum = others.reduce((s, w) => s + w, 0) || 1;
+    const remaining = 1 - target;
+    return ahp.weights.map((w, i) => (i === idx ? target : (w / othersSum) * remaining));
+  }, [ahp.weights, sensVar, sensWeight, variables]);
+
+  const adjustedScores = useMemo(
+    () => (sensVar ? topsisScores(suppliers, variables, adjustedWeights) : null),
+    [suppliers, variables, adjustedWeights, sensVar]
+  );
+
+  function addVariable() {
+    setVariables((v) => [...v, { id: uid(), name: `Variable ${v.length + 1}`, direction: "higher" }]);
+    setExpertMatrices((prev) => {
+      const next = {};
+      Object.keys(prev).forEach((key) => {
+        const m = prev[key].map((row) => [...row, 1]);
+        m.push(new Array(m[0]?.length || 1).fill(1));
+        next[key] = m;
+      });
+      return next;
+    });
+  }
+  function removeVariable(id) {
+    const idx = variables.findIndex((v) => v.id === id);
+    setVariables((v) => v.filter((x) => x.id !== id));
+    if (idx === -1) return;
+    setExpertMatrices((prev) => {
+      const next = {};
+      Object.keys(prev).forEach((key) => {
+        const m = prev[key].filter((_, i) => i !== idx).map((row) => row.filter((_, j) => j !== idx));
+        next[key] = m;
+      });
+      return next;
+    });
+  }
+
+  function addSupplier() {
+    setSuppliers((s) => [...s, { id: uid(), name: `Supplier ${s.length + 1}`, location: "", values: {}, capacity: 500, moq: 50 }]);
+  }
+  function removeSupplier(id) {
+    setSuppliers((s) => s.filter((x) => x.id !== id));
+  }
+  function setSupplierValue(sid, varId, val) {
+    setSuppliers((s) => s.map((sup) => (sup.id === sid ? { ...sup, values: { ...sup.values, [varId]: val } } : sup)));
+  }
+
+  const fileInputRef = useRef(null);
+  const [importError, setImportError] = useState(null);
+  const weightsFileInputRef = useRef(null);
+  const [weightsImportError, setWeightsImportError] = useState(null);
+
+  function normalize(str) {
+    return String(str || "")
+      .toLowerCase()
+      .replace(/\(.*?\)/g, "")
+      .replace(/[^a-z0-9]/g, "");
+  }
+
+  function handleImportFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImportError(null);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "binary" });
+        const sheet = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(sheet, { defval: "" });
+        if (rows.length === 0) {
+          setImportError("No rows found in the first sheet.");
+          return;
+        }
+        const headers = Object.keys(rows[0]);
+        const findHeader = (matcher) => headers.find((h) => matcher(normalize(h)));
+        const nameHeader = findHeader((h) => h.includes("name") || h.includes("supplier") || h.includes("vendor")) || headers[0];
+        const locationHeader = findHeader((h) => h.includes("location"));
+        const capacityHeader = findHeader((h) => h.includes("capacity"));
+        const moqHeader = findHeader((h) => h.includes("moq") || h.includes("minimum"));
+
+        const varHeaderMap = variables.map((v) => {
+          const nv = normalize(v.name);
+          const match = headers.find((h) => {
+            const nh = normalize(h);
+            return nh === nv || nh.includes(nv) || nv.includes(nh);
+          });
+          return { variable: v, header: match };
+        });
+
+        const unmatched = varHeaderMap.filter((m) => !m.header).map((m) => m.variable.name);
+
+        const imported = rows.map((row) => {
+          const values = {};
+          varHeaderMap.forEach(({ variable, header }) => {
+            if (header) values[variable.id] = Number(row[header]) || 0;
+          });
+          return {
+            id: uid(),
+            name: String(row[nameHeader] ?? `Supplier ${uid()}`),
+            location: locationHeader ? String(row[locationHeader] ?? "") : "",
+            values,
+            capacity: capacityHeader ? Number(row[capacityHeader]) || 500 : 500,
+            moq: moqHeader ? Number(row[moqHeader]) || 50 : 50,
+          };
+        });
+
+        setSuppliers((s) => [...s, ...imported]);
+        if (unmatched.length > 0) {
+          setImportError(
+            `Imported ${imported.length} supplier(s). No column matched for: ${unmatched.join(", ")} — those values default to 0, edit them manually.`
+          );
+        } else {
+          setImportError(`Imported ${imported.length} supplier(s) successfully.`);
+        }
+      } catch (err) {
+        setImportError("Could not read that file. Make sure it's a valid .xlsx, .xls, or .csv export.");
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = "";
+  }
+
+  function downloadTemplate() {
+    const headerRow = { Supplier: "", Location: "", Capacity: "", MOQ: "" };
+    variables.forEach((v) => (headerRow[v.name] = ""));
+    const ws = XLSX.utils.json_to_sheet([headerRow]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Suppliers");
+    XLSX.writeFile(wb, "supplier_import_template.xlsx");
+  }
+
+  function matchVar(label) {
+    const nh = normalize(label);
+    return variables.find((v) => {
+      const nv = normalize(v.name);
+      return nv === nh || nh.includes(nv) || nv.includes(nh);
+    });
+  }
+
+  function downloadWeightsTemplate() {
+    const wb = XLSX.utils.book_new();
+    Array.from({ length: expertCount }).forEach((_, ex) => {
+      const m = getMatrix(ex);
+      const aoa = [["", ...variables.map((v) => v.name)]];
+      variables.forEach((vi, i) => {
+        aoa.push([vi.name, ...variables.map((vj, j) => Number(m[i][j].toFixed(4)))]);
+      });
+      const ws = XLSX.utils.aoa_to_sheet(aoa);
+      XLSX.utils.book_append_sheet(wb, ws, `Expert ${ex + 1}`.slice(0, 31));
+    });
+    XLSX.writeFile(wb, "ahp_weights_template.xlsx");
+  }
+
+  function handleImportWeightsFile(e) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setWeightsImportError(null);
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const wb = XLSX.read(evt.target.result, { type: "binary" });
+        const sheetNames = wb.SheetNames;
+        if (sheetNames.length === 0) {
+          setWeightsImportError("No sheets found in that file.");
+          return;
+        }
+        const usedSheets = sheetNames.slice(0, 6);
+        const newMatrices = {};
+        const unmatched = [];
+        usedSheets.forEach((sheetName, ex) => {
+          const sheet = wb.Sheets[sheetName];
+          const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+          if (aoa.length < 2) return;
+          const colVars = aoa[0].slice(1).map((h) => matchVar(h));
+          const m = getMatrix(ex).map((row) => row.slice());
+          variables.forEach((vi, i) => {
+            const rowIdx = aoa.slice(1).findIndex((row) => matchVar(row[0])?.id === vi.id);
+            variables.forEach((vj, j) => {
+              if (i >= j) return;
+              const colIdx = colVars.findIndex((v) => v?.id === vj.id);
+              if (rowIdx === -1 || colIdx === -1) {
+                unmatched.push(`${sheetName}: ${vi.name} × ${vj.name}`);
+                return;
+              }
+              const raw = Number(aoa[rowIdx + 1][colIdx + 1]);
+              const val = raw > 0 ? raw : 1;
+              m[i][j] = val;
+              m[j][i] = 1 / val;
+            });
+          });
+          newMatrices[String(ex)] = m;
+        });
+        setExpertMatrices((prev) => ({ ...prev, ...newMatrices }));
+        setExpertCount((c) => Math.max(c, Math.min(6, usedSheets.length)));
+        if (unmatched.length > 0) {
+          setWeightsImportError(
+            `Imported ${usedSheets.length} sheet(s). Some cells didn't match a variable name and were left as-is: ${unmatched
+              .slice(0, 5)
+              .join("; ")}${unmatched.length > 5 ? "…" : ""}`
+          );
+        } else {
+          setWeightsImportError(`Imported ${usedSheets.length} expert sheet(s) successfully.`);
+        }
+      } catch (err) {
+        setWeightsImportError("Could not read that file. Make sure it matches the downloaded template's layout.");
+      }
+    };
+    reader.readAsBinaryString(file);
+    e.target.value = "";
+  }
+
+  function addConstraint() {
+    setConstraints((c) => [...c, { id: uid(), label: "New constraint", variable: variables[0]?.id || "composite", op: ">=", value: 0 }]);
+  }
+  function removeConstraint(id) {
+    setConstraints((c) => c.filter((x) => x.id !== id));
+  }
+
+  // TOPSIS: vector-normalize the decision matrix, weight it, measure distance
+  // to the ideal-best and ideal-worst vectors, rank by closeness coefficient.
+  const compositeScores = useMemo(() => topsisScores(suppliers, variables, ahp.weights), [suppliers, variables, ahp.weights]);
+
+  function passesConstraints(supplier) {
+    return constraints.every((c) => {
+      let val;
+      if (c.variable === "composite") val = compositeScores[supplier.id] ?? 0;
+      else val = Number(supplier.values[c.variable] ?? 0);
+      const target = Number(c.value);
+      if (c.op === ">=") return val >= target;
+      if (c.op === "<=") return val <= target;
+      return val === target;
+    });
+  }
+
+  function allocate(withUncertainty, strategy) {
+    const eligible = suppliers.filter(passesConstraints);
+    if (eligible.length === 0) return { rows: [], totalCost: 0, unmet: demand };
+    let ranked;
+    if (strategy === "cheapest") {
+      const costVar = variables.find((v) => /cost/i.test(v.name));
+      ranked = [...eligible].sort((a, b) => Number(a.values[costVar?.id] ?? 0) - Number(b.values[costVar?.id] ?? 0));
+    } else if (strategy === "highest-quality") {
+      ranked = [...eligible].sort((a, b) => (compositeScores[b.id] ?? 0) - (compositeScores[a.id] ?? 0));
+    } else if (strategy === "50-50") {
+      ranked = eligible.slice(0, 2);
+    } else {
+      ranked = [...eligible].sort((a, b) => (compositeScores[b.id] ?? 0) - (compositeScores[a.id] ?? 0));
+    }
+    let remaining = demand;
+    const rows = [];
+    const activeSet = strategy === "50-50" ? ranked : ranked;
+    const share = strategy === "50-50" ? demand / Math.max(activeSet.length, 1) : null;
+    activeSet.forEach((sup) => {
+      if (remaining <= 0) return;
+      const risk = withUncertainty ? (rainfallRisk[sup.id] ?? 0) / 100 : 0;
+      const effectiveCapacity = sup.capacity * (1 - risk);
+      const alloc = strategy === "50-50" ? Math.min(share, effectiveCapacity) : Math.min(remaining, effectiveCapacity);
+      if (alloc < sup.moq && alloc > 0) return;
+      const costVar = variables.find((v) => /cost/i.test(v.name));
+      const unitCost = Number(sup.values[costVar?.id] ?? 1);
+      rows.push({ supplier: sup.name, allocated: Math.round(alloc), unitCost, cost: Math.round(alloc * unitCost), risk: Math.round(risk * 100) });
+      remaining -= alloc;
+    });
+    const totalCost = rows.reduce((s, r) => s + r.cost, 0);
+    return { rows, totalCost, unmet: Math.max(0, Math.round(remaining)) };
+  }
+
+  const resultDet = useMemo(() => allocate(false, "optimized"), [suppliers, constraints, compositeScores, demand]);
+  const resultUnc = useMemo(() => allocate(true, "optimized"), [suppliers, constraints, compositeScores, demand, rainfallRisk]);
+  const naiveCheap = useMemo(() => allocate(false, "cheapest"), [suppliers, constraints, compositeScores, demand]);
+  const naiveQuality = useMemo(() => allocate(false, "highest-quality"), [suppliers, constraints, compositeScores, demand]);
+  const naiveSplit = useMemo(() => allocate(false, "50-50"), [suppliers, constraints, compositeScores, demand]);
+
+  const [mcResult, setMcResult] = useState(null);
+  const [mcRunning, setMcRunning] = useState(false);
+
+  function runMonteCarlo(iterations = 1000) {
+    setMcRunning(true);
+    // Fixed Step-3 plan: the deterministic optimized allocation. Monte Carlo does
+    // not re-optimize per iteration — it measures how that fixed plan holds up
+    // under random supplier disruption.
+    const plan = resultDet.rows.map((r) => {
+      const sup = suppliers.find((s) => s.name === r.supplier);
+      return { ...r, supplierObj: sup };
+    });
+
+    // Disruption probability per supplier: base rate, raised by rainfall risk,
+    // raised further the lower the supplier's TOPSIS score (docx Step 4 spec).
+    const pDisrupt = {};
+    plan.forEach((r) => {
+      const c = compositeScores[r.supplierObj?.id] ?? 0.5;
+      const rain = (rainfallRisk[r.supplierObj?.id] ?? 0) / 100;
+      pDisrupt[r.supplier] = Math.min(0.9, 0.05 + (1 - c) * 0.35 + rain * 0.5);
+    });
+
+    // Common-cause correlation: suppliers sharing a location string share one
+    // random draw, so a bad monsoon week can take out more than one vendor at once.
+    const locationGroups = {};
+    plan.forEach((r) => {
+      const loc = (r.supplierObj?.location || "").trim().toLowerCase() || `__unique_${r.supplier}`;
+      if (!locationGroups[loc]) locationGroups[loc] = [];
+      locationGroups[loc].push(r.supplier);
+    });
+
+    const costs = [];
+    const serviceLevels = [];
+    for (let iter = 0; iter < iterations; iter++) {
+      const sharedDraw = {};
+      Object.keys(locationGroups).forEach((loc) => (sharedDraw[loc] = Math.random()));
+      let delivered = 0;
+      let cost = 0;
+      plan.forEach((r) => {
+        const loc = (r.supplierObj?.location || "").trim().toLowerCase() || `__unique_${r.supplier}`;
+        const draw = sharedDraw[loc];
+        const disrupted = draw < pDisrupt[r.supplier];
+        if (!disrupted) {
+          delivered += r.allocated;
+          cost += r.cost;
+        }
+      });
+      costs.push(cost);
+      serviceLevels.push(demand > 0 ? delivered / demand : 0);
+    }
+    costs.sort((a, b) => a - b);
+    const mean = (arr) => arr.reduce((s, v) => s + v, 0) / (arr.length || 1);
+    const pct = (arr, p) => arr[Math.min(arr.length - 1, Math.floor((p / 100) * arr.length))];
+    const buckets = 12;
+    const min = costs[0] ?? 0;
+    const max = costs[costs.length - 1] ?? 1;
+    const width = (max - min) / buckets || 1;
+    const hist = new Array(buckets).fill(0);
+    costs.forEach((c) => {
+      const b = Math.min(buckets - 1, Math.floor((c - min) / width));
+      hist[b]++;
+    });
+    setMcResult({
+      meanCost: mean(costs),
+      p5: pct(costs, 5),
+      p50: pct(costs, 50),
+      p95: pct(costs, 95),
+      meanService: mean(serviceLevels),
+      minService: Math.min(...serviceLevels),
+      hist,
+      histMin: min,
+      histMax: max,
+      iterations,
+    });
+    setMcRunning(false);
+  }
+
+  const stepIndex = SECTIONS.findIndex((s) => s.id === active);
+  const goNext = () => stepIndex < SECTIONS.length - 1 && setActive(SECTIONS[stepIndex + 1].id);
+  const goPrev = () => stepIndex > 0 && setActive(SECTIONS[stepIndex - 1].id);
+
+  const feasibleCount = suppliers.filter(passesConstraints).length;
+  const bestScore = Object.values(compositeScores).length ? Math.max(...Object.values(compositeScores)) : 0;
+  const crOk = ahp.cr < 0.1;
+
+  return (
+    <div
+      className="w-full min-h-screen bg-surface-100 text-ink-900 text-[13px] leading-normal"
+      style={{ fontFamily: '"IBM Plex Sans", "Segoe UI", sans-serif' }}
+    >
+      <div className="flex items-stretch">
+        <aside className="w-56 shrink-0 border-r border-line-200 bg-white sticky top-0 h-screen flex flex-col">
+          <div className="px-4 py-4 border-b border-line-200">
+            <div
+              className="text-[11px] uppercase tracking-[0.16em] text-accent-600 font-semibold"
+              style={{ fontFamily: '"IBM Plex Mono", monospace' }}
+            >
+              SRC&#8226;OPT
+            </div>
+            <div className="text-[11px] text-ink-500 mt-1 leading-snug">
+              Vendor rating &amp; risk-based sourcing optimization
+            </div>
+          </div>
+          <nav className="flex-1 overflow-y-auto py-1">
+            {SECTIONS.map((s, idx) => {
+              const isActive = idx === stepIndex;
+              const isDone = idx < stepIndex;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => setActive(s.id)}
+                  className={`w-full flex items-center gap-2.5 px-4 py-2 text-left border-l-2 transition ${
+                    isActive
+                      ? "border-accent-600 bg-accent-50"
+                      : "border-transparent hover:bg-surface-100"
+                  }`}
+                >
+                  <span
+                    className={`text-[10px] w-4 shrink-0 ${isActive ? "text-accent-600" : "text-ink-400"}`}
+                    style={{ fontFamily: '"IBM Plex Mono", monospace' }}
+                  >
+                    {String(idx + 1).padStart(2, "0")}
+                  </span>
+                  <span className={`text-[12.5px] flex-1 ${isActive ? "text-accent-700 font-semibold" : "text-ink-500"}`}>
+                    {s.label}
+                  </span>
+                  {isDone && <CheckCircle2 size={12} className="text-good-600 shrink-0" />}
+                </button>
+              );
+            })}
+          </nav>
+          <div
+            className="px-4 py-3 border-t border-line-200 text-[10px] text-ink-400 tabular-nums"
+            style={{ fontFamily: '"IBM Plex Mono", monospace' }}
+          >
+            STEP {String(stepIndex + 1).padStart(2, "0")} / {String(SECTIONS.length).padStart(2, "0")}
+          </div>
+        </aside>
+
+        <div className="flex-1 min-w-0">
+          <div className="border-b border-line-200 bg-white px-6 py-2.5 flex items-center gap-7 overflow-x-auto">
+            {[
+              { label: "VARIABLES", value: variables.length },
+              { label: "EXPERTS", value: expertCount },
+              { label: "CR", value: ahp.cr.toFixed(3), dot: crOk ? "good" : "bad" },
+              { label: "SUPPLIERS", value: suppliers.length },
+              { label: "FEASIBLE", value: feasibleCount, dot: feasibleCount > 0 ? "good" : "bad" },
+              { label: "BEST SCORE", value: bestScore.toFixed(3) },
+            ].map((k) => (
+              <div key={k.label} className="flex items-center gap-2 shrink-0">
+                {k.dot && (
+                  <span className={`w-1.5 h-1.5 rounded-full ${k.dot === "good" ? "bg-good-600" : "bg-bad-600"}`} />
+                )}
+                <span className="text-[10px] tracking-wide text-ink-400">{k.label}</span>
+                <span className="text-[12.5px] font-semibold text-ink-900 tabular-nums" style={{ fontFamily: '"IBM Plex Mono", monospace' }}>
+                  {k.value}
+                </span>
+              </div>
+            ))}
+          </div>
+
+          <main className="max-w-4xl px-6 py-6">
+        <div className="bg-white border border-line-200 rounded-sm p-6">
+        {active === "variables" && (
+          <Section title="Variables" subtitle="Quantifiable criteria used to evaluate suppliers. Add or remove any number.">
+            <div className="space-y-2">
+              {variables.map((v) => (
+                <div key={v.id} className="flex items-center gap-2 bg-white border border-line-200 rounded px-3 py-2">
+                  <input
+                    className="flex-1 bg-transparent outline-none text-sm"
+                    value={v.name}
+                    onChange={(e) =>
+                      setVariables((vs) => vs.map((x) => (x.id === v.id ? { ...x, name: e.target.value } : x)))
+                    }
+                  />
+                  <select
+                    className="bg-surface-100 text-xs rounded px-2 py-1 border border-line-300"
+                    value={v.direction}
+                    onChange={(e) =>
+                      setVariables((vs) => vs.map((x) => (x.id === v.id ? { ...x, direction: e.target.value } : x)))
+                    }
+                  >
+                    <option value="higher">Maximize</option>
+                    <option value="lower">Minimize</option>
+                  </select>
+                  <button onClick={() => removeVariable(v.id)} className="text-ink-500 hover:text-bad-600">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button onClick={addVariable} className="mt-3 flex items-center gap-1 text-xs text-accent-600 hover:text-accent-700">
+              <Plus size={14} /> Add variable
+            </button>
+          </Section>
+        )}
+
+        {active === "weights" && (
+          <Section title="AHP weights" subtitle="Pairwise comparison (Saaty 1–9 scale). Add experts to aggregate via geometric mean.">
+            <div className="flex items-center gap-3 mb-4">
+              <label className="text-xs text-ink-500">Experts</label>
+              <input
+                type="number"
+                min={1}
+                max={6}
+                value={expertCount}
+                onChange={(e) => setExpertCount(Math.max(1, Math.min(6, Number(e.target.value))))}
+                className="w-16 bg-white border border-line-300 rounded px-2 py-1 text-sm"
+              />
+            </div>
+
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                ref={weightsFileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleImportWeightsFile}
+                className="hidden"
+              />
+              <button
+                onClick={() => weightsFileInputRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs bg-accent-600 hover:bg-accent-700 text-white rounded px-3 py-1.5"
+              >
+                <Upload size={13} /> Import from Excel
+              </button>
+              <button
+                onClick={downloadWeightsTemplate}
+                className="flex items-center gap-1.5 text-xs border border-line-300 text-ink-500 hover:bg-surface-100 rounded px-3 py-1.5"
+              >
+                <Download size={13} /> Download template
+              </button>
+            </div>
+            {weightsImportError && (
+              <p className={`text-xs mb-4 ${weightsImportError.startsWith("Imported") ? "text-good-600" : "text-bad-600"}`}>
+                {weightsImportError}
+              </p>
+            )}
+
+            {Array.from({ length: expertCount }).map((_, ex) => (
+              <div key={ex} className="mb-6">
+                {expertCount > 1 && <div className="text-xs text-ink-500 mb-2">Expert {ex + 1}</div>}
+                <div className="overflow-x-auto">
+                  <table className="text-xs border-collapse">
+                    <thead>
+                      <tr>
+                        <th className="p-1"></th>
+                        {variables.map((v) => (
+                          <th key={v.id} className="p-1 text-ink-500 font-normal max-w-[80px] truncate">
+                            {v.name}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {variables.map((vi, i) => (
+                        <tr key={vi.id}>
+                          <td className="p-1 text-ink-500 pr-2 max-w-[100px] truncate">{vi.name}</td>
+                          {variables.map((vj, j) => (
+                            <td key={vj.id} className="p-1">
+                              {i === j ? (
+                                <div className="w-14 text-center text-ink-400">1</div>
+                              ) : i < j ? (
+                                <input
+                                  type="number"
+                                  step="0.1"
+                                  min="0.11"
+                                  max="9"
+                                  className="w-14 bg-white border border-line-300 rounded px-1 py-0.5 text-center"
+                                  value={getMatrix(ex)[i][j]}
+                                  onChange={(e) => setCell(ex, i, j, Math.max(0.11, Number(e.target.value) || 1))}
+                                />
+                              ) : (
+                                <div className="w-14 text-center text-ink-400">{(1 / getMatrix(ex)[j][i]).toFixed(2)}</div>
+                              )}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+
+            <div className="mt-4 border-t border-line-200 pt-4">
+              <div className="text-xs text-ink-500 mb-2">Derived weights {expertCount > 1 && "(aggregated across experts)"}</div>
+              <div className="space-y-1">
+                {variables.map((v, idx) => (
+                  <div key={v.id} className="flex items-center gap-2">
+                    <div className="w-40 text-xs text-ink-500 truncate">{v.name}</div>
+                    <div className="flex-1 h-2 bg-surface-100 rounded overflow-hidden">
+                      <div className="h-full bg-accent-600" style={{ width: `${(ahp.weights[idx] || 0) * 100}%` }} />
+                    </div>
+                    <div className="w-12 text-xs text-right font-mono">{((ahp.weights[idx] || 0) * 100).toFixed(1)}%</div>
+                  </div>
+                ))}
+              </div>
+              <div className={`mt-3 flex items-center gap-2 text-xs ${ahp.cr < 0.1 ? "text-good-600" : "text-bad-600"}`}>
+                {ahp.cr < 0.1 ? <CheckCircle2 size={14} /> : <AlertTriangle size={14} />}
+                CR = {ahp.cr.toFixed(3)} {ahp.cr < 0.1 ? "(consistent)" : "(revise judgments — CR should be < 0.10)"}
+              </div>
+            </div>
+          </Section>
+        )}
+
+        {active === "suppliers" && (
+          <Section title="Suppliers" subtitle="Enter each supplier's value for every variable, plus capacity and MOQ.">
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                onChange={handleImportFile}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center gap-1.5 text-xs bg-accent-600 hover:bg-accent-700 text-white rounded px-3 py-1.5"
+              >
+                <Upload size={13} /> Import from Excel
+              </button>
+              <button
+                onClick={downloadTemplate}
+                className="flex items-center gap-1.5 text-xs border border-line-300 text-ink-500 hover:bg-surface-100 rounded px-3 py-1.5"
+              >
+                <Download size={13} /> Download template
+              </button>
+            </div>
+            {importError && (
+              <p className={`text-xs mb-4 ${importError.startsWith("Imported") ? "text-good-600" : "text-bad-600"}`}>
+                {importError}
+              </p>
+            )}
+            <div className="space-y-4">
+              {suppliers.map((s) => (
+                <div key={s.id} className="bg-white border border-line-200 rounded p-3">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="relative flex-1">
+                      <input
+                        className="w-full font-medium text-sm text-ink-900 bg-surface-100 border border-line-300 rounded px-2 py-1.5 pr-7 focus:border-accent-600 focus:outline-none"
+                        value={s.name}
+                        onChange={(e) => setSuppliers((sp) => sp.map((x) => (x.id === s.id ? { ...x, name: e.target.value } : x)))}
+                      />
+                      <Pencil size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-ink-400 pointer-events-none" />
+                    </div>
+                    <input
+                      placeholder="Location (for rainfall lookup)"
+                      className="bg-surface-100 text-xs rounded px-2 py-1 border border-line-300 w-48"
+                      value={s.location}
+                      onChange={(e) => setSuppliers((sp) => sp.map((x) => (x.id === s.id ? { ...x, location: e.target.value } : x)))}
+                    />
+                    <button
+                      onClick={() => fetchOneSupplierRainfall(s)}
+                      disabled={fetchingId === s.id}
+                      title="Fetch live rainfall risk for this location"
+                      className="flex items-center gap-1 text-xs border border-accent-600 text-accent-700 hover:bg-accent-50 disabled:opacity-50 rounded px-2 py-1"
+                    >
+                      <CloudRain size={13} /> {fetchingId === s.id ? "..." : rainfallRisk[s.id] != null ? `${rainfallRisk[s.id]}%` : "Fetch"}
+                    </button>
+                    <button onClick={() => removeSupplier(s.id)} className="text-ink-500 hover:text-bad-600">
+                      <Trash2 size={15} />
+                    </button>
+                  </div>
+                  {rainfallMeta[s.id] && (
+                    <div className={`text-xs mb-2 -mt-1 ${rainfallMeta[s.id].source === "error" ? "text-bad-600" : "text-ink-500"}`}>
+                      {rainfallMeta[s.id].source === "live" && `Rainfall risk ${rainfallRisk[s.id]}% — ${rainfallMeta[s.id].place}: ${rainfallMeta[s.id].detail}`}
+                      {rainfallMeta[s.id].source === "error" && `Couldn't fetch rainfall: ${rainfallMeta[s.id].detail}`}
+                      {rainfallMeta[s.id].source === "manual" && "Rainfall risk set manually on the Rainfall tab"}
+                    </div>
+                  )}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {variables.map((v, vIdx) => (
+                      <label key={v.id} className="text-xs text-ink-500">
+                        {v.name}{" "}
+                        <span className="text-accent-600 font-mono">({((ahp.weights[vIdx] || 0) * 100).toFixed(0)}%)</span>
+                        <input
+                          type="number"
+                          className="w-full mt-1 bg-surface-100 border border-line-300 rounded px-2 py-1 text-sm text-ink-900"
+                          value={s.values[v.id] ?? ""}
+                          onChange={(e) => setSupplierValue(s.id, v.id, Number(e.target.value))}
+                        />
+                      </label>
+                    ))}
+                    <label className="text-xs text-ink-500">
+                      Capacity
+                      <input
+                        type="number"
+                        className="w-full mt-1 bg-surface-100 border border-line-300 rounded px-2 py-1 text-sm text-ink-900"
+                        value={s.capacity}
+                        onChange={(e) => setSuppliers((sp) => sp.map((x) => (x.id === s.id ? { ...x, capacity: Number(e.target.value) } : x)))}
+                      />
+                    </label>
+                    <label className="text-xs text-ink-500">
+                      MOQ
+                      <input
+                        type="number"
+                        className="w-full mt-1 bg-surface-100 border border-line-300 rounded px-2 py-1 text-sm text-ink-900"
+                        value={s.moq}
+                        onChange={(e) => setSuppliers((sp) => sp.map((x) => (x.id === s.id ? { ...x, moq: Number(e.target.value) } : x)))}
+                      />
+                    </label>
+                  </div>
+                  <div className="mt-2 text-xs text-ink-500">
+                    TOPSIS closeness coefficient: <span className="text-accent-600 font-mono">{(compositeScores[s.id] ?? 0).toFixed(3)}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <button onClick={addSupplier} className="mt-3 flex items-center gap-1 text-xs text-accent-600 hover:text-accent-700">
+              <Plus size={14} /> Add supplier
+            </button>
+          </Section>
+        )}
+
+        {active === "topsis" && (
+          <Section title="TOPSIS ranking" subtitle="AHP weights applied to a vector-normalized decision matrix, ranked by closeness coefficient.">
+            <div className="space-y-2">
+              {[...suppliers]
+                .sort((a, b) => (compositeScores[b.id] ?? 0) - (compositeScores[a.id] ?? 0))
+                .map((s, rank) => {
+                  const c = compositeScores[s.id] ?? 0;
+                  const ok = passesConstraints(s);
+                  return (
+                    <div key={s.id} className="flex items-center gap-3 bg-white border border-line-200 rounded px-3 py-2">
+                      <div className="w-6 text-xs font-mono text-ink-500">#{rank + 1}</div>
+                      <div className="w-32 text-sm">{s.name}</div>
+                      <div className="flex-1 h-2 bg-surface-100 rounded overflow-hidden">
+                        <div className="h-full bg-accent-600" style={{ width: `${c * 100}%` }} />
+                      </div>
+                      <div className="w-14 text-right text-xs font-mono">{c.toFixed(3)}</div>
+                      <div className={`w-24 text-right text-xs ${ok ? "text-good-600" : "text-bad-600"}`}>
+                        {ok ? "eligible" : "excluded"}
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+            <p className="text-xs text-ink-500 mt-4 leading-relaxed">
+              C = S⁻ / (S⁺ + S⁻), where S⁺ and S⁻ are Euclidean distances from each supplier's weighted, vector-normalized
+              scores to the ideal-best and ideal-worst vectors across all variables. Higher C ranks closer to ideal.
+              "Eligible / excluded" reflects the constraints defined in the next section — a supplier can rank first here
+              and still be excluded from allocation if it fails a hard constraint.
+            </p>
+
+            <div className="mt-8 pt-6 border-t border-line-200">
+              <h3 className="text-sm font-semibold text-ink-900 mb-1">Sensitivity analysis</h3>
+              <p className="text-xs text-ink-500 mb-4">
+                Force one variable to a target weight, redistribute the rest proportionally, and see who moves. E.g. push
+                Compliance/certification above Cost and check whether the ranking still holds.
+              </p>
+              <div className="flex items-center gap-3 mb-4">
+                <select
+                  className="bg-surface-100 text-xs rounded px-2 py-1.5 border border-line-300"
+                  value={sensVar ?? ""}
+                  onChange={(e) => setSensVar(e.target.value || null)}
+                >
+                  <option value="">Select a variable to override…</option>
+                  {variables.map((v) => (
+                    <option key={v.id} value={v.id}>
+                      {v.name}
+                    </option>
+                  ))}
+                </select>
+                {sensVar && (
+                  <>
+                    <input
+                      type="range"
+                      min={0}
+                      max={100}
+                      value={sensWeight}
+                      onChange={(e) => setSensWeight(Number(e.target.value))}
+                      className="flex-1"
+                    />
+                    <span className="w-14 text-xs font-mono text-accent-700">{sensWeight}%</span>
+                    <button onClick={() => setSensVar(null)} className="text-xs text-ink-400 hover:text-bad-600">
+                      Clear
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {sensVar && adjustedScores && (
+                <div className="space-y-1.5">
+                  {[...suppliers]
+                    .sort((a, b) => (compositeScores[b.id] ?? 0) - (compositeScores[a.id] ?? 0))
+                    .map((s, baseRank) => {
+                      const adjRanked = [...suppliers].sort(
+                        (a, b) => (adjustedScores[b.id] ?? 0) - (adjustedScores[a.id] ?? 0)
+                      );
+                      const adjRank = adjRanked.findIndex((x) => x.id === s.id);
+                      const delta = baseRank - adjRank;
+                      return (
+                        <div key={s.id} className="flex items-center gap-3 bg-white border border-line-200 rounded px-3 py-2 text-xs">
+                          <div className="w-32 text-ink-500">{s.name}</div>
+                          <div className="w-24 text-ink-500 font-mono">
+                            #{baseRank + 1} → #{adjRank + 1}
+                          </div>
+                          <div className="w-16 font-mono text-ink-500">
+                            {(compositeScores[s.id] ?? 0).toFixed(3)} → {(adjustedScores[s.id] ?? 0).toFixed(3)}
+                          </div>
+                          {delta !== 0 && (
+                            <div className={`font-medium ${delta > 0 ? "text-good-600" : "text-bad-600"}`}>
+                              {delta > 0 ? `↑ moved up ${delta}` : `↓ moved down ${Math.abs(delta)}`}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
+            </div>
+          </Section>
+        )}
+
+        {active === "constraints" && (
+          <Section title="Constraints" subtitle="Numerical inequalities applied before allocation. A supplier failing any constraint is excluded.">
+            <div className="space-y-2">
+              {constraints.map((c) => (
+                <div key={c.id} className="flex items-center gap-2 bg-white border border-line-200 rounded px-3 py-2">
+                  <select
+                    className="bg-surface-100 text-xs rounded px-2 py-1 border border-line-300"
+                    value={c.variable}
+                    onChange={(e) => setConstraints((cs) => cs.map((x) => (x.id === c.id ? { ...x, variable: e.target.value } : x)))}
+                  >
+                    <option value="composite">Composite score</option>
+                    {variables.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name}
+                      </option>
+                    ))}
+                  </select>
+                  <select
+                    className="bg-surface-100 text-xs rounded px-2 py-1 border border-line-300"
+                    value={c.op}
+                    onChange={(e) => setConstraints((cs) => cs.map((x) => (x.id === c.id ? { ...x, op: e.target.value } : x)))}
+                  >
+                    <option value=">=">{"\u2265"}</option>
+                    <option value="<=">{"\u2264"}</option>
+                    <option value="=">=</option>
+                  </select>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="w-24 bg-surface-100 border border-line-300 rounded px-2 py-1 text-sm"
+                    value={c.value}
+                    onChange={(e) => setConstraints((cs) => cs.map((x) => (x.id === c.id ? { ...x, value: Number(e.target.value) } : x)))}
+                  />
+                  <button onClick={() => removeConstraint(c.id)} className="ml-auto text-ink-500 hover:text-bad-600">
+                    <Trash2 size={15} />
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button onClick={addConstraint} className="mt-3 flex items-center gap-1 text-xs text-accent-600 hover:text-accent-700">
+              <Plus size={14} /> Add constraint
+            </button>
+          </Section>
+        )}
+
+        {active === "uncertainty" && (
+          <Section title="Rainfall risk" subtitle="Live rainfall-disruption risk per supplier: current conditions + 7-day forecast vs. that location's own 1-year rainfall pattern.">
+            <div className="flex items-center gap-3 mb-4">
+              <button
+                onClick={runFetchAllLiveRainfall}
+                disabled={rainfallLoading}
+                className="flex items-center gap-1.5 text-xs bg-accent-600 hover:bg-accent-700 disabled:opacity-50 text-white rounded px-3 py-1.5"
+              >
+                <CloudRain size={13} /> {rainfallLoading ? "Fetching..." : "Fetch live rainfall risk for all suppliers"}
+              </button>
+              <label className="flex items-center gap-1.5 text-xs text-ink-500 cursor-pointer">
+                <input type="checkbox" checked={autoTrack} onChange={(e) => setAutoTrack(e.target.checked)} />
+                Auto-refresh every 15 min while this tab is open
+              </label>
+            </div>
+            <div className="space-y-2">
+              {suppliers.map((s) => {
+                const meta = rainfallMeta[s.id];
+                return (
+                  <div key={s.id} className="bg-white border border-line-200 rounded px-3 py-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-32 text-sm">{s.name}</div>
+                      <div className="w-40 text-xs text-ink-500">{s.location || "no location set"}</div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={100}
+                        value={rainfallRisk[s.id] ?? 0}
+                        onChange={(e) => {
+                          setRainfallRisk((r) => ({ ...r, [s.id]: Number(e.target.value) }));
+                          setRainfallMeta((m) => ({ ...m, [s.id]: { source: "manual", detail: "Manually overridden" } }));
+                        }}
+                        className="flex-1"
+                      />
+                      <div className="w-12 text-right text-xs font-mono text-accent-600">{rainfallRisk[s.id] ?? 0}%</div>
+                    </div>
+                    {meta && (
+                      <div className={`text-xs mt-1.5 ${meta.source === "error" ? "text-bad-600" : "text-ink-500"}`}>
+                        {meta.source === "live" && `Live — ${meta.place}: ${meta.detail} (fetched ${meta.fetchedAt})`}
+                        {meta.source === "manual" && "Manually overridden"}
+                        {meta.source === "error" && `Couldn't fetch: ${meta.detail}`}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+            <p className="text-xs text-ink-500 mt-4 leading-relaxed">
+              Live fetch: geocodes each supplier's location, pulls 1 year of historical daily rainfall to establish
+              that location's own 90th-percentile ("heavy rain") threshold, then checks current conditions and the
+              7-day forecast against that threshold. Risk = % of the next 7 forecast days expected to exceed it — this
+              is forward-looking, not a summary of what already happened. Auto-refresh re-runs this on a timer while
+              you keep the tab open; it doesn't run when you're not here, since this is a browser app with no server.
+              You can still drag any slider manually to override — that value is what actually drives the Optimize
+              and Monte Carlo tabs either way.
+            </p>
+          </Section>
+        )}
+
+        {active === "montecarlo" && (
+          <Section title="Monte Carlo simulation" subtitle="1000+ iterations of random supplier disruption applied to the fixed optimized allocation.">
+            <button
+              onClick={() => runMonteCarlo(1000)}
+              disabled={mcRunning || resultDet.rows.length === 0}
+              className="text-xs bg-accent-600 hover:bg-accent-700 disabled:opacity-50 text-white font-medium rounded px-3 py-2 mb-6"
+            >
+              {mcRunning ? "Running..." : "Run 1000 iterations"}
+            </button>
+            {resultDet.rows.length === 0 && (
+              <p className="text-xs text-bad-600 mb-4">No suppliers in the deterministic allocation yet — check Suppliers, Constraints, and Optimize first.</p>
+            )}
+            {mcResult && (
+              <>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                  <Stat label="Mean cost" value={`₹${Math.round(mcResult.meanCost).toLocaleString()}`} />
+                  <Stat label="P5 – P95 cost" value={`₹${Math.round(mcResult.p5).toLocaleString()} – ₹${Math.round(mcResult.p95).toLocaleString()}`} />
+                  <Stat label="Mean service level" value={`${(mcResult.meanService * 100).toFixed(1)}%`} />
+                  <Stat label="Worst-case service level" value={`${(mcResult.minService * 100).toFixed(1)}%`} />
+                </div>
+                <div className="text-xs text-ink-500 mb-2">Cost distribution ({mcResult.iterations} iterations)</div>
+                <div className="flex items-end gap-1 h-32 mb-2">
+                  {mcResult.hist.map((h, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-accent-500 rounded-t"
+                      style={{ height: `${(h / Math.max(...mcResult.hist)) * 100}%` }}
+                      title={`${h} iterations`}
+                    />
+                  ))}
+                </div>
+                <div className="flex justify-between text-xs text-ink-400 font-mono">
+                  <span>₹{Math.round(mcResult.histMin).toLocaleString()}</span>
+                  <span>₹{Math.round(mcResult.histMax).toLocaleString()}</span>
+                </div>
+              </>
+            )}
+            <p className="text-xs text-ink-500 mt-6 leading-relaxed">
+              Disruption probability per supplier = base rate + (1 − TOPSIS score) weighting + rainfall-risk weighting,
+              capped at 90%. Suppliers sharing the same location text share one random draw per iteration, so they can
+              fail together (common-cause), matching the docx's correlated-disruption requirement. This measures the
+              fixed Step 3 allocation under disruption — it does not re-optimize per iteration. That's Step 5's job
+              (two-stage stochastic recourse), not built yet.
+            </p>
+          </Section>
+        )}
+
+        {active === "optimize" && (
+          <Section title="Optimize & compare" subtitle="Allocation with and without uncertainty, benchmarked against naive strategies.">
+            <div className="flex items-center gap-3 mb-6">
+              <label className="text-xs text-ink-500">Total demand</label>
+              <input
+                type="number"
+                value={demand}
+                onChange={(e) => setDemand(Number(e.target.value))}
+                className="w-28 bg-white border border-line-300 rounded px-2 py-1 text-sm"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <ResultCard title="Optimized — without uncertainty" result={resultDet} accent="emerald" demand={demand} />
+              <ResultCard title="Optimized — with rainfall uncertainty" result={resultUnc} accent="sky" demand={demand} />
+            </div>
+
+            <div className="text-xs text-ink-500 mb-2 mt-8">Naive strategy comparison</div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <ResultCard title="Cheapest vendor only" result={naiveCheap} accent="slate" demand={demand} />
+              <ResultCard title="Highest quality only" result={naiveQuality} accent="slate" demand={demand} />
+              <ResultCard title="50-50 split" result={naiveSplit} accent="slate" demand={demand} />
+            </div>
+          </Section>
+        )}
+        </div>
+
+        <div className="flex items-center justify-between mt-4">
+          <button
+            onClick={goPrev}
+            disabled={stepIndex === 0}
+            className="text-sm px-4 py-2 rounded border border-line-300 text-ink-500 bg-white hover:bg-surface-100 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            Back
+          </button>
+          <span className="text-xs text-ink-400">
+            Step {stepIndex + 1} of {SECTIONS.length}
+          </span>
+          <button
+            onClick={goNext}
+            disabled={stepIndex === SECTIONS.length - 1}
+            className="text-sm px-4 py-2 rounded bg-accent-600 text-white hover:bg-accent-700 disabled:opacity-40 disabled:cursor-not-allowed flex items-center gap-1"
+          >
+            Next <ChevronRight size={14} />
+          </button>
+          </div>
+        </main>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Section({ title, subtitle, children }) {
+  return (
+    <div>
+      <div className="mb-5 pb-3 border-b border-line-200">
+        <h2
+          className="text-[15px] font-semibold text-ink-900 uppercase tracking-wide"
+          style={{ fontFamily: '"IBM Plex Sans Condensed", sans-serif' }}
+        >
+          {title}
+        </h2>
+        <p className="text-[12.5px] text-ink-500 mt-1">{subtitle}</p>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function Stat({ label, value }) {
+  return (
+    <div className="bg-white border border-line-200 rounded p-3">
+      <div className="text-xs text-ink-500 mb-1">{label}</div>
+      <div className="text-sm font-mono text-ink-900">{value}</div>
+    </div>
+  );
+}
+
+function ResultCard({ title, result, accent, demand }) {
+  const colors = {
+    emerald: "border-good-600 bg-good-50",
+    sky: "border-warn-600 bg-warn-50",
+    slate: "border-line-200 bg-surface-100",
+  };
+  return (
+    <div className={`rounded border p-3 ${colors[accent]}`}>
+      <div className="text-xs text-ink-500 mb-2">{title}</div>
+      <div className="text-xl font-mono text-ink-900 mb-1">₹{result.totalCost.toLocaleString()}</div>
+      {result.unmet > 0 && (
+        <div className="text-xs text-bad-600 flex items-center gap-1 mb-2">
+          <AlertTriangle size={12} /> {result.unmet} units unmet demand
+        </div>
+      )}
+      {result.rows.length > 0 ? (
+        <table className="w-full text-xs mt-2 border-collapse">
+          <thead>
+            <tr className="text-ink-500">
+              <th className="text-left font-normal pb-1">Supplier</th>
+              <th className="text-right font-normal pb-1">Units</th>
+              <th className="text-right font-normal pb-1">% demand</th>
+              <th className="text-right font-normal pb-1">Cost</th>
+            </tr>
+          </thead>
+          <tbody>
+            {result.rows.map((r, i) => (
+              <tr key={i} className="border-t border-line-200">
+                <td className="py-1 text-ink-900">
+                  {r.supplier}
+                  {r.risk > 0 && <span className="text-accent-600"> ({r.risk}% risk)</span>}
+                </td>
+                <td className="py-1 text-right font-mono text-ink-900">{r.allocated}</td>
+                <td className="py-1 text-right font-mono text-ink-500">
+                  {demand > 0 ? ((r.allocated / demand) * 100).toFixed(1) : "0.0"}%
+                </td>
+                <td className="py-1 text-right font-mono text-ink-500">₹{r.cost.toLocaleString()}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      ) : (
+        <div className="text-xs text-ink-500 mt-2">No eligible suppliers</div>
+      )}
+    </div>
+  );
+}
+
+
+const rootEl = document.getElementById("root");
+ReactDOM.createRoot(rootEl).render(<SourcingDashboard />);
+
+</script>
+</body>
+</html>
